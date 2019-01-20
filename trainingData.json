@@ -1,0 +1,20 @@
+{
+  "self": {
+    "questions": [
+      "introduce yourself",
+      "namaste",
+      "hi",
+      "hello"
+    ],
+    "answer" : "Hello! I'm Primus. :robot_face:"
+  },
+  "world": {
+    "questions": [
+      "what is the world",
+      "answer to the universe and everything"
+    ],
+    "answer": [
+      "42 it is."
+    ]
+  }
+}
