@@ -1,4 +1,8 @@
+const path = require('path');
 const botkit = require('botkit');
+const {parseTrainingData} = require('./parseTrainingData.js');
+const trainingData = parseTrainingData(path.join(__dirname,'./trainingData.json'));  //loading training data
+
 require('dotenv').config(); //Load our environment variables from the .env file
 
 
@@ -24,7 +28,18 @@ Bot.hears('.*', scopes, handleMessage);   //configuring bot
                                           // (.*) ---->  message
                                           // scope -----> message to be considered
                                           // handling ----> handleMessage
-
 Bot.spawn({
   token: token
 }).startRTM();
+
+
+const NLP = require('natural');
+const classifier = new NLP.LogisticsRegressionClassifier(); //create a new classifier
+
+function trainClassifier(classifier, label, phrases) {    //feeding data to classifier
+  console.log('Teaching set', label, phrases);
+  phrases.forEach((phrase) => {
+    console.log('Teaching single ${label}: ${phrase}');
+    classifier.addDocument(phrase.toLowerCase(), label);      //associating phrases to label
+  });
+}
