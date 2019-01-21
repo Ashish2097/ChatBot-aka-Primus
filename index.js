@@ -19,10 +19,10 @@ const Bot = botkit.slackbot({     //chat bot instance
   storage: undefined
 });
 
-function handleMessage(speech, message) {
-  console.log(speech, message);
-  speech.reply(message, "got it");        //handling replies
-}
+// function handleMessage(speech, message) {
+//   console.log(speech, message);
+//   speech.reply(message, "got it");        //handling replies
+// }
 
 Bot.hears('.*', scopes, handleMessage);   //configuring bot
                                           // (.*) ---->  message
@@ -43,3 +43,46 @@ function trainClassifier(classifier, label, phrases) {    //feeding data to clas
     classifier.addDocument(phrase.toLowerCase(), label);      //associating phrases to label
   });
 }
+
+function interpret(phrase) {
+  console.log('interpret', phrase);
+  const guesses = classifier.getClassifications(phrase.toLowerCase());
+  console.log('guesses', guesses);
+  const guess = guesses.reduce((x, y) => x && x.value > y.value ? x : y);
+  return {
+    probabilities: guesses,
+    guess: guess.value > (0.7) ? guess.label : null
+  };
+}
+
+function handleMessage(speech, message) {
+  const interpretation = interpret(message.text);
+  console.log('Bot heard: ', message.text);
+  console.log('Bot interpretation: ', interpretation);
+
+  if (interpretation.guess && trainingData[interpretation.guess]) {
+    console.log('Found response');
+    speech.reply(message, trainingData[interpretation.guess].answer);
+  } else {
+    console.log('Couldn\'t match phrase');
+    speech.reply(message, 'Sorry, I\'m not sure what you mean');
+  }
+}
+
+//generating classifier for each label in training data
+var i = 0;
+Object.keys(trainingData).forEach((element, key) => {
+  trainClassifier(classifier, element, trainingData[element].questions);
+  i++;
+  //training at the end
+  if(i === Object.keys(trainingData).length) {
+    classifier.train();
+    const filePath = './classifier.json';
+    classifier.save(filePath, (err, classifier) => {
+      if(err) {
+        console.log("error in saving classifier: ",err);
+      }
+      console.log("Created a Classifier file in ", filePath);
+    });
+  }
+});
